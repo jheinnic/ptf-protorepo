@@ -1,0 +1,125 @@
+syntax = "proto3";
+
+package name.jchein.portfolio.random_art;
+
+option java_multiple_files = true;
+option java_outer_classname = "ExampleProto";
+option java_package = "name.jchein.portfolio.services.randomArt.paintGateway.grpc.proto";
+
+// import "name/jchein/portfolio/common/grpc/action/actions.proto";
+
+// Incoming paint task queue.
+service PaintGateway {
+    rpc createPaintArtworkTasks (stream CreatePaintArtworkTask) returns (stream CommandReceived) { };
+
+    rpc createPaintArtworkTask (CreatePaintArtworkTask) returns (CommandReceived) { };
+
+    rpc cancelPaintArtworkTasks (stream CancelPaintArtworkTask) returns (stream CommandReceived) { };
+
+    rpc cancelPaintArtworkTask (CancelPaintArtworkTask) returns (CommandReceived) { };
+
+    rpc reportTaskState (stream UpdatePaintArtworkTask) returns (stream CommandReceived) { };
+}
+
+// Request messages contain command properties.
+message CreatePaintArtworkTask {
+    string id = 1;
+    string seedPrefix = 7;
+    string seedSuffix = 8;
+    bool newModel = 9;
+    string renderPolicy = 10;
+    string stagingPolicy = 11;
+}
+
+message CancelPaintArtworkTask {
+    string id = 1;
+    uint32 seq = 2;
+}
+
+// TODO
+message SuspendPaintArtworkTask {
+    string id = 1;
+    uint32 seq = 2;
+}
+
+// TODO
+message ResumePaintArtworkTask {
+    string id = 1;
+    uint32 seq = 2;
+}
+
+// TODO
+// Retry will re-initiate a SOFT_ERROR or DROPPED task
+message RetryPaintArtworkTask {
+    string id = 1;
+    uint32 seq = 2;
+}
+
+// TODO
+// Acknowledgement will be used to determine when it is Ok to CLOSE a FINISHED task.
+message AcknowledgePaintArtworkTask {
+    string id = 1;
+    uint32 seq = 2;
+}
+
+message CommandReceived {
+    string id = 1;
+    uint32 seq = 2;
+    string type = 3;
+    bool accepted = 4;
+}
+
+// All except PERCENT_DONE and ERROR use InformationUpdate body.
+enum UpdateType {
+    IN_PAINT_QUEUE = 0;
+    IN_UPLOAD_QUEUE = 1;
+    PAINT_PROGRESS = 2; // Uses PercentDoneUpdate body
+    UPLOADING = 3;
+    PAUSED = 4;
+    SOFT_ERROR = 5;       // Uses RetryableErrorUpdate body
+    FATAL_ERROR = 6;
+    FINISHED = 7;
+    CANCELLED = 8;   // Delete state -- User initiated abort
+    DROPPED = 9;     // Delete state -- User acknowledged error
+    CLOSED = 10;     // Delete state -- User acknowledged success
+}
+
+message PercentDoneUpdate {
+    string message = 3;
+    uint32 percentDone = 4;
+}
+
+message InformationUpdate {
+    string message = 3;
+}
+
+message RetryableErrorUpdate {
+    string message = 3;
+    uint32 retryIn = 4;
+}
+
+message UpdatePaintArtworkTask {
+    string id = 1;
+    uint32 seq = 2;
+    UpdateType updateType = 3;
+    oneof updateBody {
+        PercentDoneUpdate percentDoneBody = 13;
+        InformationUpdate informationBody = 14;
+        RetryableErrorUpdate retryErrorBody = 15;
+    }
+}
+
+//enum StatusType {
+//    HEARTBEAT = 0;
+//    CLOSED = 1;   // Only used after receiving a CLOSE_CHANNEL UpdateTaskState message.
+//    INFORMATION = 2;
+//    ERROR = 3;
+//}
+//
+//message ChannelHeartbeat {
+//    StatusType statusType = 2;
+//    string message = 3;
+//    uint32 requestCount = 4;
+//    string lastRequestId = 5;
+//}
+
