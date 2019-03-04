@@ -41,7 +41,7 @@ function buildProtoForTypes {
 
   if [ -f .protolangs ]; then
     while read lang; do
-      reponame="protorepo-$target-$lang"
+      reponame="ptf-$lang-proto-$target"
 
       rm -rf $REPOPATH/$reponame
 
