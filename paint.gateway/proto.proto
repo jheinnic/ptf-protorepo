@@ -14,7 +14,7 @@ service PaintGateway {
 
     rpc createAndMonitor(CreatePaintArtworkTask) returns (stream ArtworkTaskProgressEvent) { };
 
-    rpc monitor(MonitorPaintArtworkTask) returns (stream ArtworkTaskProgressEvent)
+    rpc monitor(MonitorPaintArtworkTask) returns (stream ArtworkTaskProgressEvent);
 
     rpc acknowledge(CancelPaintArtworkTask) returns (RequestReceived) { };
 
@@ -28,6 +28,12 @@ message CreatePaintArtworkTask {
     bool newModel = 9;
     string renderPolicy = 10;
     string storagePolicy = 11;
+    bool autoAck = 12;
+}
+
+message MonitorPaintArtworkTask {
+    string id = 1;
+    // uint32 seq = 2;
     bool autoAck = 12;
 }
 
