@@ -1,0 +1,98 @@
+syntax = "proto3";
+
+package name.jchein.portfolio.services.paint.gateway;
+
+option java_multiple_files = true;
+option java_outer_classname = "PaintGatewayProto";
+option java_package = "name.jchein.portfolio.services.paint.gateway.grpc";
+
+// import "name/jchein/portfolio/common/grpc/action/actions.proto";
+
+// Incoming paint task queue.
+service PaintGateway {
+    rpc create(CreatePaintArtworkTask) returns (RequestReceived) { };
+
+    rpc createAndMonitor(CreatePaintArtworkTask) returns (stream ArtworkTaskProgressEvent) { };
+
+    rpc monitor(MonitorPaintArtworkTask) returns (stream ArtworkTaskProgressEvent);
+
+    rpc acknowledge(CancelPaintArtworkTask) returns (RequestReceived) { };
+
+    rpc cancel(CancelPaintArtworkTask) returns (RequestReceived) { };
+}
+
+// Request messages contain command properties.
+message CreatePaintArtworkTask {
+    string seedPrefix = 7;
+    string seedSuffix = 8;
+    bool newModel = 9;
+    string renderPolicy = 10;
+    string storagePolicy = 11;
+    bool autoAck = 12;
+}
+
+message MonitorPaintArtworkTask {
+    string id = 1;
+    // uint32 seq = 2;
+    bool autoAck = 12;
+}
+
+message CancelPaintArtworkTask {
+    string id = 1;
+    // uint32 seq = 2;
+    bool autoAck = 12;
+}
+
+// Acknowledgement will be used to determine when it is Ok to CLOSE a FINISHED task or DROP an ERROR or CANCELLED task.
+message AcknowledgePaintArtworkTask {
+    string id = 1;
+    // uint32 seq = 2;
+}
+
+message RequestReceived {
+    string id = 1;
+}
+
+// All except PERCENT_DONE and ERROR use InformationUpdate body.
+enum TaskStateType {
+    IN_PAINT_QUEUE = 0;
+    IN_UPLOAD_QUEUE = 1;
+    PAINT_PROGRESS = 2; // Uses PercentDoneUpdate body
+    UPLOADING = 3;
+    // PAUSED = 4; Reserved value for future PAUSED state
+    // SOFT_ERROR = 5;       // Reserved value for future RETRY message
+    ERROR = 6;
+    FINISHED = 7;
+    CANCELLED = 8;
+    DROPPED = 9;     // Delete state -- User acknowledged error or cancellation
+    CLOSED = 10;     // Delete state -- User acknowledged success
+}
+
+message ArtworkTaskProgressEvent {
+    string id = 1;
+    // uint32 seq = 2;
+    TaskStateType taskState = 3;
+    uint32 percentPainted = 4;
+    string message = 5;
+}
+
+// TODO
+// message SuspendPaintArtworkTask {
+//     string id = 1;
+//     // uint32 seq = 2;
+// }
+
+// TODO
+// message ResumePaintArtworkTask {
+//     string id = 1;
+//     // uint32 seq = 2;
+// }
+
+// TODO
+// Retry will re-initiate a SOFT_ERROR or CANCELLED task
+// message RetryPaintArtworkTask {
+//     string id = 1;
+//     // uint32 seq = 2;
+// }
+
+
